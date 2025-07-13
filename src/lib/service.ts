@@ -1,6 +1,6 @@
 import { fromZonedTime } from "date-fns-tz"
 import { ErrorFirstTuple, ReversalRequest } from "@/types"
-import { getDay, getHours, isBefore } from "date-fns";
+import { addDays, getDay, getHours, isBefore, setHours } from "date-fns";
 
 const NEW_TOS_EPOCH_DATE = new Date('2020-01-03');
 
@@ -59,8 +59,24 @@ export const isOutOfHours = (date: Date): ErrorFirstTuple<boolean> => {
  * @returns A tuple containing an error (if any) and the next business day's 9am date.
  */
 export const getNextBusinessDay9am = (date: Date): ErrorFirstTuple<Date> => {
-  console.log('Getting next business day 9am for date:', date);
-  return [new Error('Not implemented'), undefined]
+  const dayOfWeek = getDay(date);
+  const hour = getHours(date);
+
+  if (dayOfWeek === 0) {
+    return [undefined, setHours(addDays(date, 1), 9)] // Sunday -> Monday
+  } else if (dayOfWeek === 5) {
+    if (hour < 9) {
+      return [undefined, setHours(date, 9)] // Friday before 9am -> Friday 9am
+    } else {
+      return [undefined, setHours(addDays(date, 3), 9)] // Friday after 5pm -> Monday
+    }
+  } else if (dayOfWeek === 6) {
+    return [undefined, setHours(addDays(date, 2), 9)] // Saturday -> Monday
+  } else if (hour < 9) {
+    return [undefined, setHours(date, 9)] // before 9am -> 9am
+  } else {
+    return [undefined, setHours(addDays(date, 1), 9)] // after 5pm -> next day 9am
+  }
 }
 
 /**
