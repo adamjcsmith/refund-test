@@ -149,6 +149,86 @@ describe('isNewTOS', () => {
 });
 
 describe('determineRefundEligibility', () => {
+  it('should return false for a new TOS web app-based request made > 16 hours after investment', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '8/1/2020', // new TOS
+      source: 'web app',
+      investmentDate: '10/07/2025',
+      investmentTime: '08:00',
+      requestDate: '11/07/2025',
+      requestTime: '08:00'
+    }
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, false]);
+  })  
+
+  it('should return false for a new TOS phone-based request made > 24 hours after investment', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '8/1/2020', // new TOS
+      source: 'phone',
+      investmentDate: '09/07/2025',
+      investmentTime: '08:00',
+      requestDate: '10/07/2025',
+      requestTime: '05:00' // out of hours
+    }
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, false]);
+  })
+  
+  it('should return false for an old TOS web app-based request made > 8 hours after investment', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '31/12/2019', // old TOS
+      source: 'web app',
+      investmentDate: '10/07/2025',
+      investmentTime: '12:30',
+      requestDate: '10/07/2025',
+      requestTime: '20:45'
+    }
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, false]);
+  })
+
+  it('should return false for an Old TOS phone-based request made > 4 hours after investment', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '31/12/2019', // old TOS
+      source: 'phone',
+      investmentDate: '10/07/2025',
+      investmentTime: '12:30',
+      requestDate: '10/07/2025',
+      requestTime: '16:45'
+    }
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, false]);
+  })
+
+  it('should return an error for an unsupported source', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '31/12/2019', // old TOS
+      source: 'unknown',
+      investmentDate: '10/07/2025',
+      investmentTime: '13:00',
+      requestDate: '10/07/2025',
+      requestTime: '16:00'
+    }
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([new Error('Unknown source: unknown'), undefined]);
+  })
+
   it('should return true for a valid phone-based request (Old TOS)', () => {
     const mockRequest: ReversalRequest = {
       name: 'Jannik Sinner',
