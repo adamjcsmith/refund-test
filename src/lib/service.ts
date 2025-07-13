@@ -54,6 +54,16 @@ export const isOutOfHours = (date: Date): ErrorFirstTuple<boolean> => {
 }
 
 /**
+ * Returns the next business day's 9am date.
+ * @param date - The date to check.
+ * @returns A tuple containing an error (if any) and the next business day's 9am date.
+ */
+export const getNextBusinessDay9am = (date: Date): ErrorFirstTuple<Date> => {
+  console.log('Getting next business day 9am for date:', date);
+  return [new Error('Not implemented'), undefined]
+}
+
+/**
  * Returns the effective request time (UK time) depending on the source.
  * @param request - The reversal request to check.
  * @returns A tuple containing an error (if any) and the effective request time.
@@ -68,9 +78,13 @@ export const getEffectiveRequestTime = (request: ReversalRequest): ErrorFirstTup
   const requestDateZoned = fromZonedTime(requestDate, IANA_TZ);
 
   if (request.source === 'web app') {
-    return [undefined, requestDateZoned]
+    return [undefined, requestDateZoned] // passing on the request date as-is
   } else if (request.source === 'phone') {
-    return [undefined, requestDateZoned] // TODO: implement
+    if (!isOutOfHours(requestDateZoned)) {
+      return [undefined, requestDateZoned] // pass on as is as it's not out of hours
+    }
+
+    return [new Error('Not implemented'), undefined] // TODO: implement
   }
 
   return [new Error(`Unknown source: ${request.source}`), undefined];

@@ -1,6 +1,28 @@
 import { toZonedTime } from 'date-fns-tz';
-import { determineRefundEligibility, getEffectiveRequestTime, isNewTOS, isOutOfHours } from '../service';
+import { determineRefundEligibility, getEffectiveRequestTime, getNextBusinessDay9am, isNewTOS, isOutOfHours } from '../service';
 import { ReversalRequest } from '@/types';
+
+describe('getNextBusinessDay9am', () => {
+  it('should return the next business day 9am for a date on a weekday', () => {
+    const result = getNextBusinessDay9am(toZonedTime(new Date('2025-07-11 17:00'), 'Europe/London'));
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 09:00'), 'Europe/London')]);
+  });
+
+  it('should return the next business day (Monday) 9am for a date on a weekend', () => {
+    const result = getNextBusinessDay9am(toZonedTime(new Date('2025-07-13 17:00'), 'Europe/London'));
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 09:00'), 'Europe/London')]);
+  });
+
+  it('should return the start of the business day (9am) for any weekday before 9am', () => {
+    const result = getNextBusinessDay9am(toZonedTime(new Date('2025-07-11 08:00'), 'Europe/London'));
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-11 09:00'), 'Europe/London')]);
+  });
+
+  it('should return the start of the next business day (9am) for any weekday after 5pm', () => {
+    const result = getNextBusinessDay9am(toZonedTime(new Date('2025-07-09 20:00'), 'Europe/London'));
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-10 09:00'), 'Europe/London')]);
+  });
+})
 
 describe('isOutOfHours', () => {
   it('should return true for a request made after 5pm on a weekday', () => {
