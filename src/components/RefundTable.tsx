@@ -8,8 +8,25 @@ import {
 } from "./ui/table"
 import data from "../data/reversals.json"
 import { ReversalRequest } from "@/types"
+import { determineRefundEligibility } from "@/lib/service";
+
+interface RefundRequest extends ReversalRequest {
+  refundEligible: boolean;
+}
 
 const RefundTable = () => {
+  const refundEligibilityErrors: Error[] = [];
+  const refundEligibilityResults: RefundRequest[] = [];
+
+  data.forEach((row: ReversalRequest) => {
+    const [error, refundEligible] = determineRefundEligibility(row);
+    if (error) {
+      refundEligibilityErrors.push(error);
+    }
+
+    refundEligibilityResults.push({ ...row, refundEligible: refundEligible ?? false });
+  });
+
   return (
     <Table>
       <TableHeader>
@@ -22,10 +39,11 @@ const RefundTable = () => {
           <TableHead>Investment Time</TableHead>
           <TableHead>Refund Request Date</TableHead>
           <TableHead>Refund Request Time</TableHead>
+          <TableHead>Refund Eligible</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((row: ReversalRequest) => (
+        {refundEligibilityResults.map((row: RefundRequest) => (
           <TableRow key={row.name}>
             <TableCell className="font-medium">{row.name}</TableCell>
             <TableCell>{row.customerTZ}</TableCell>
@@ -35,6 +53,7 @@ const RefundTable = () => {
             <TableCell>{row.investmentTime}</TableCell>
             <TableCell>{row.requestDate}</TableCell>
             <TableCell>{row.requestTime}</TableCell>
+            <TableCell>{row.refundEligible ? 'Yes' : 'No'}</TableCell>
           </TableRow>
         ))}
       </TableBody>
