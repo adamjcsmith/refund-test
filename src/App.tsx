@@ -1,11 +1,11 @@
 import './App.css'
-import RefundTable from './RefundTable'
+import RefundTable from './components/RefundTable'
 
 function App() {
   return (
     <>
       <div>
-        <p>Refund app</p>
+        <h1 className="text-xl mb-8">Reversal Requests</h1>
         <RefundTable />
       </div>
     </>
