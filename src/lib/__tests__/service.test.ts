@@ -1,5 +1,24 @@
-import { determineRefundEligibility, isNewTOS } from '../service';
+import { toZonedTime } from 'date-fns-tz';
+import { determineRefundEligibility, getEffectiveRequestTime, isNewTOS } from '../service';
 import { ReversalRequest } from '@/types';
+
+describe('getEffectiveRequestTime', () => {
+  it('should return the request time, as-is, but adjusted to UK time, for a web based request made out of hours', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Joe Bloggs',
+      customerTZ: 'US (PST)',
+      signupDate: '1/2/2020',
+      source: 'web app',
+      investmentDate: '7/13/2025',
+      investmentTime: '18:00',
+      requestDate: '7/13/2025',
+      requestTime: '19:00' // out of hours UK time
+    }
+
+    const result = getEffectiveRequestTime(mockRequest);
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 03:00'), 'Europe/London')]);
+  })
+})
 
 describe('isNewTOS', () => {
   it('Unsupported timezones should be rejected', () => {
@@ -15,7 +34,7 @@ describe('isNewTOS', () => {
     };
     
     const result = isNewTOS(mockRequest);
-    expect(result).toEqual([new Error('Unknown timezone: Unknown'), false]);
+    expect(result).toEqual([new Error('Unknown timezone: Unknown'), undefined]);
   });
 
   it('should return false for a user signup before the new TOS epoch date', () => {
@@ -31,7 +50,7 @@ describe('isNewTOS', () => {
     };
 
     const result = isNewTOS(mockRequest);
-    expect(result).toEqual([null, false]);
+    expect(result).toEqual([undefined, false]);
   });
 
   it('should return true for a user signup after the new TOS epoch date', () => {
@@ -47,7 +66,7 @@ describe('isNewTOS', () => {
     };
 
     const result = isNewTOS(mockRequest);
-    expect(result).toEqual([null, true]);
+    expect(result).toEqual([undefined, true]);
   });
 });
 

@@ -1,5 +1,5 @@
-export type ErrorFirstTuplePromise<T, E = Error> = Promise<[E, T]>
-export type ErrorFirstTuple<T, E = Error | null> = [E, T]
+export type ErrorFirstTuplePromise<T, E = Error> = Promise<[E, undefined]> | Promise<[undefined, T]>
+export type ErrorFirstTuple<T, E = Error | null> = [E, undefined] | [undefined, T]
 
 export interface ReversalRequest {
   name: string

@@ -21,7 +21,7 @@ const TZ_LOOKUP = {
 export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => {
   const IANA_TZ = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
   if (!IANA_TZ) {
-    return [new Error(`Unknown timezone: ${request.customerTZ}`), false];
+    return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
   }
 
   // Zone from the customer's tz to the system tz, ensuring consistency in date comparisons:
@@ -30,9 +30,35 @@ export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => 
 
   const isOldTOS = isBefore(signupDateZoned, NEW_TOS_EPOCH_DATE);
 
-  return [null, !isOldTOS]
+  return [undefined, !isOldTOS]
 }
 
+/**
+ * Returns the effective request time (UK time) depending on the source.
+ * @param request - The reversal request to check.
+ * @returns A tuple containing an error (if any) and the effective request time.
+ */
+export const getEffectiveRequestTime = (request: ReversalRequest): ErrorFirstTuple<Date> => {
+  const IANA_TZ = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
+  if (!IANA_TZ) {
+    return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
+  }
+
+  const requestDate = new Date(`${request.requestDate} ${request.requestTime}`);
+  const requestDateZoned = fromZonedTime(requestDate, IANA_TZ);
+
+  console.log('Request date:', requestDate);
+  console.log('Request date zoned:', requestDateZoned);
+
+  return [undefined, requestDateZoned]
+}
+
+
+/**
+ * Determines if the user is eligible for a refund based on their request.
+ * @param request - The reversal request to check.
+ * @returns A boolean indicating if the user is eligible for a refund.
+ */
 export const determineRefundEligibility = (request: ReversalRequest): boolean => {
   console.log('Checking eligibility for request:', request.name);
   return false
