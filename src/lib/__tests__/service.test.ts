@@ -4,21 +4,21 @@ import { ReversalRequest } from '@/types';
 
 describe('isOutOfHours', () => {
   it('should return true for a request made after 5pm on a weekday', () => {
-    const result = isOutOfHours(new Date('2025-07-11T17:00:00Z'));
+    const result = isOutOfHours(toZonedTime(new Date('2025-07-11 17:00'), 'Europe/London'));
     expect(result).toEqual([undefined, true]);
   })
   it('should return false for a request made after 9am on a weekday', () => {
-    const result = isOutOfHours(new Date('2025-07-11T10:00:00Z'));
+    const result = isOutOfHours(toZonedTime(new Date('2025-07-11 10:00'), 'Europe/London'));
     expect(result).toEqual([undefined, false]);
   })
 
   it('should return true for a request made before 9am on a weekday', () => {
-    const result = isOutOfHours(new Date('2025-07-11T08:00:00Z'));
+    const result = isOutOfHours(toZonedTime(new Date('2025-07-11 08:00'), 'Europe/London'));
     expect(result).toEqual([undefined, true]);
   })
   
   it('should return true for a request made on any weekend day', () => {
-    const result = isOutOfHours(new Date('2025-07-13T12:00:00Z'));
+    const result = isOutOfHours(toZonedTime(new Date('2025-07-13 12:00'), 'Europe/London'));
     expect(result).toEqual([undefined, true]);
   })
 })

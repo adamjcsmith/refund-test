@@ -1,6 +1,6 @@
 import { fromZonedTime } from "date-fns-tz"
 import { ErrorFirstTuple, ReversalRequest } from "@/types"
-import { isBefore } from "date-fns";
+import { getDay, getHours, isBefore } from "date-fns";
 
 const NEW_TOS_EPOCH_DATE = new Date('2020-01-03');
 
@@ -33,9 +33,24 @@ export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => 
   return [undefined, !isOldTOS]
 }
 
+/**
+ * Determines if the date is out of hours, e.g. before 9am or after 5pm on a weekday, or any weekend day.
+ * @param date - The date to check.
+ * @returns A tuple containing an error (if any) and a boolean indicating if the date is out of hours.
+ */
 export const isOutOfHours = (date: Date): ErrorFirstTuple<boolean> => {
-  console.log('Checking if date is out of hours:', date);
-  return [new Error('Not implemented'), undefined]
+  const dayOfWeek = getDay(date);
+  const hour = getHours(date);
+
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return [undefined, true]
+  }
+
+  if (hour < 9 || hour >= 17) {
+    return [undefined, true]
+  }
+
+  return [undefined, false]
 }
 
 /**
