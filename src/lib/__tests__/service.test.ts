@@ -1,5 +1,23 @@
-import { determineRefundEligibility } from '../service';
+import { determineRefundEligibility, isNewTOS } from '../service';
 import { ReversalRequest } from '@/types';
+
+describe('isNewTOS', () => {
+  it('New TOS (US-based)', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Emma Smith',
+      customerTZ: 'US (PST)',
+      signupDate: '1/2/2020',
+      source: 'phone',
+      investmentDate: '1/2/2021',
+      investmentTime: '06:00',
+      requestDate: '1/2/2021',
+      requestTime: '09:00'
+    };
+
+    const result = isNewTOS(mockRequest);
+    expect(result).toEqual([null, true]);
+  });
+});
 
 describe('determineRefundEligibility', () => {
   it('should return true for a valid phone-based request (New TOS)', () => {
