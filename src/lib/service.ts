@@ -33,6 +33,11 @@ export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => 
   return [undefined, !isOldTOS]
 }
 
+export const isOutOfHours = (date: Date): ErrorFirstTuple<boolean> => {
+  console.log('Checking if date is out of hours:', date);
+  return [new Error('Not implemented'), undefined]
+}
+
 /**
  * Returns the effective request time (UK time) depending on the source.
  * @param request - The reversal request to check.
@@ -47,10 +52,13 @@ export const getEffectiveRequestTime = (request: ReversalRequest): ErrorFirstTup
   const requestDate = new Date(`${request.requestDate} ${request.requestTime}`);
   const requestDateZoned = fromZonedTime(requestDate, IANA_TZ);
 
-  console.log('Request date:', requestDate);
-  console.log('Request date zoned:', requestDateZoned);
+  if (request.source === 'web app') {
+    return [undefined, requestDateZoned]
+  } else if (request.source === 'phone') {
+    return [undefined, requestDateZoned] // TODO: implement
+  }
 
-  return [undefined, requestDateZoned]
+  return [new Error(`Unknown source: ${request.source}`), undefined];
 }
 
 

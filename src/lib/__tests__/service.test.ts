@@ -1,6 +1,27 @@
 import { toZonedTime } from 'date-fns-tz';
-import { determineRefundEligibility, getEffectiveRequestTime, isNewTOS } from '../service';
+import { determineRefundEligibility, getEffectiveRequestTime, isNewTOS, isOutOfHours } from '../service';
 import { ReversalRequest } from '@/types';
+
+describe('isOutOfHours', () => {
+  it('should return true for a request made after 5pm on a weekday', () => {
+    const result = isOutOfHours(new Date('2025-07-11T17:00:00Z'));
+    expect(result).toEqual([undefined, true]);
+  })
+  it('should return false for a request made after 9am on a weekday', () => {
+    const result = isOutOfHours(new Date('2025-07-11T10:00:00Z'));
+    expect(result).toEqual([undefined, false]);
+  })
+
+  it('should return true for a request made before 9am on a weekday', () => {
+    const result = isOutOfHours(new Date('2025-07-11T08:00:00Z'));
+    expect(result).toEqual([undefined, true]);
+  })
+  
+  it('should return true for a request made on any weekend day', () => {
+    const result = isOutOfHours(new Date('2025-07-13T12:00:00Z'));
+    expect(result).toEqual([undefined, true]);
+  })
+})
 
 describe('getEffectiveRequestTime', () => {
   it('should return the request time, as-is, but adjusted to UK time, for a web based request made out of hours', () => {
@@ -17,6 +38,22 @@ describe('getEffectiveRequestTime', () => {
 
     const result = getEffectiveRequestTime(mockRequest);
     expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 03:00'), 'Europe/London')]);
+  })
+
+  it('should return an error for an unsupported source', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Joe Bloggs',
+      customerTZ: 'US (PST)',
+      signupDate: '1/2/2020',
+      source: 'unknown',
+      investmentDate: '7/13/2025',
+      investmentTime: '18:00',
+      requestDate: '7/13/2025',
+      requestTime: '19:00'
+    }
+
+    const result = getEffectiveRequestTime(mockRequest);
+    expect(result).toEqual([new Error('Unknown source: unknown'), undefined]);
   })
 })
 
