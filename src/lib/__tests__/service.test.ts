@@ -2,7 +2,6 @@ import { determineRefundEligibility, isNewTOS } from '../service';
 import { ReversalRequest } from '@/types';
 
 describe('isNewTOS', () => {
-
   it('Unsupported timezones should be rejected', () => {
     const mockRequest: ReversalRequest = {
       name: 'Emma Smith',
@@ -19,7 +18,7 @@ describe('isNewTOS', () => {
     expect(result).toEqual([new Error('Unknown timezone: Unknown'), false]);
   });
 
-  it('New TOS (US-based)', () => {
+  it('should return false for a user signup before the new TOS epoch date', () => {
     const mockRequest: ReversalRequest = {
       name: 'Emma Smith',
       customerTZ: 'US (PST)',
@@ -28,6 +27,22 @@ describe('isNewTOS', () => {
       investmentDate: '1/2/2021',
       investmentTime: '06:00',
       requestDate: '1/2/2021',
+      requestTime: '09:00'
+    };
+
+    const result = isNewTOS(mockRequest);
+    expect(result).toEqual([null, false]);
+  });
+
+  it('should return true for a user signup after the new TOS epoch date', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Emma Smith',
+      customerTZ: 'US (PST)',
+      signupDate: '1/8/2020',
+      source: 'phone',
+      investmentDate: '1/8/2021',
+      investmentTime: '06:00',
+      requestDate: '1/8/2021',
       requestTime: '09:00'
     };
 

@@ -1,8 +1,11 @@
+import { fromZonedTime } from "date-fns-tz"
 import { ErrorFirstTuple, ReversalRequest } from "@/types"
+import { isBefore } from "date-fns";
 
-// Using a LUT here to map the customerTZ to the correct timezone.
-// This is a simple lookup table and will need to be updated if we add more timezones,
-// or better yet use an IANA timezone name, like below:
+const NEW_TOS_EPOCH_DATE = new Date('2020-01-03');
+
+// Using a LUT here to map the customerTZ to the correct timezone
+// Better approach is to use IANA timezone names, as below:
 const TZ_LOOKUP = {
   'US (PST)': 'America/Los_Angeles',
   'US (EST)': 'America/New_York',
@@ -10,16 +13,24 @@ const TZ_LOOKUP = {
   'Europe (GMT)': 'Europe/London',
 }
 
+/**
+ * Determines if the user is on the new TOS based on their signup date.
+ * @param request - The reversal request to check.
+ * @returns A tuple containing an error (if any) and a boolean indicating if the user is on the new TOS.
+ */
 export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => {
-  // If the user has signed up before 2/1/2020 (UK) or 1/2/2020 (US) then they are on the old TOS
-  // Otherwise, they are on the new TOS. We can use the customerTZ to determine the correct date.
-
   const IANA_TZ = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
   if (!IANA_TZ) {
     return [new Error(`Unknown timezone: ${request.customerTZ}`), false];
   }
 
-  return [new Error("Not implemented"), true]
+  // Zone from the customer's tz to the system tz, ensuring consistency in date comparisons:
+  const signupDate = new Date(request.signupDate);
+  const signupDateZoned = fromZonedTime(signupDate, IANA_TZ);
+
+  const isOldTOS = isBefore(signupDateZoned, NEW_TOS_EPOCH_DATE);
+
+  return [null, !isOldTOS]
 }
 
 export const determineRefundEligibility = (request: ReversalRequest): boolean => {
