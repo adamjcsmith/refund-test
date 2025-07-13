@@ -62,6 +62,22 @@ describe('getEffectiveRequestTime', () => {
     expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 03:00'), 'Europe/London')]);
   })
 
+  it('should return the request time, adjusted to the next business day 9am, for a phone-based request made out of hours', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Joe Bloggs',
+      customerTZ: 'US (PST)',
+      signupDate: '1/2/2020',
+      source: 'phone',
+      investmentDate: '7/13/2025',
+      investmentTime: '18:00',
+      requestDate: '7/13/2025',
+      requestTime: '19:00' // out of hours UK time
+    }
+    
+    const result = getEffectiveRequestTime(mockRequest);
+    expect(result).toEqual([undefined, toZonedTime(new Date('2025-07-14 09:00'), 'Europe/London')]);
+  })
+
   it('should return an error for an unsupported source', () => {
     const mockRequest: ReversalRequest = {
       name: 'Joe Bloggs',
@@ -92,8 +108,9 @@ describe('isNewTOS', () => {
       requestTime: '09:00'
     };
     
-    const result = isNewTOS(mockRequest);
-    expect(result).toEqual([new Error('Unknown timezone: Unknown'), undefined]);
+    const [error, result] = isNewTOS(mockRequest);
+    expect(error).toBeDefined();
+    expect(result).toBeUndefined();
   });
 
   it('should return false for a user signup before the new TOS epoch date', () => {
@@ -108,8 +125,9 @@ describe('isNewTOS', () => {
       requestTime: '09:00'
     };
 
-    const result = isNewTOS(mockRequest);
-    expect(result).toEqual([undefined, false]);
+    const [error, result] = isNewTOS(mockRequest);
+    expect(error).toBeUndefined();
+    expect(result).toBe(false);
   });
 
   it('should return true for a user signup after the new TOS epoch date', () => {
@@ -124,26 +142,75 @@ describe('isNewTOS', () => {
       requestTime: '09:00'
     };
 
-    const result = isNewTOS(mockRequest);
-    expect(result).toEqual([undefined, true]);
+    const [error, result] = isNewTOS(mockRequest);
+    expect(error).toBeUndefined();
+    expect(result).toBe(true);
   });
 });
 
 describe('determineRefundEligibility', () => {
-  it('should return true for a valid phone-based request (New TOS)', () => {
-    // This is a valid phone-based request
+  it('should return true for a valid phone-based request (Old TOS)', () => {
     const mockRequest: ReversalRequest = {
-        "name": "Emma Smith",
-        "customerTZ": "US (PST)",
-        "signupDate": "1/2/2020",
-        "source": "phone",
-        "investmentDate": "1/2/2021",
-        "investmentTime": "06:00",
-        "requestDate": "1/2/2021",
-        "requestTime": "09:00"
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '31/12/2019', // old TOS
+      source: 'phone',
+      investmentDate: '10/07/2025',
+      investmentTime: '13:00',
+      requestDate: '10/07/2025',
+      requestTime: '16:00'
     };
 
     const result = determineRefundEligibility(mockRequest);
-    expect(result).toBe(true);
+    expect(result).toEqual([undefined, true]);
+  })
+
+  it('should return true for a valid phone-based request (New TOS)', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Jannik Sinner',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '8/1/2020', // new TOS
+      source: 'phone',
+      investmentDate: '10/07/2025',
+      investmentTime: '13:00',
+      requestDate: '10/07/2025',
+      requestTime: '23:00'
+    };
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, true]);
+  })
+
+  it('should return true for a valid web app-based request (Old TOS)', () => {
+    const mockRequest: ReversalRequest = {
+      name: 'Carlos Alcaraz',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '31/12/2019', // old TOS
+      source: 'web app',
+      investmentDate: '13/07/2025',
+      investmentTime: '03:00',
+      requestDate: '13/07/2025',
+      requestTime: '08:00'
+    };
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, true]);
+  })
+  
+  it('should return true for a valid web app-based request (New TOS)', () => {
+    // This is a valid web app request made out of hours
+    const mockRequest: ReversalRequest = {
+      name: 'Carlos Alcaraz',
+      customerTZ: 'Europe (GMT)',
+      signupDate: '8/1/2020', // new TOS
+      source: 'web app',
+      investmentDate: '13/07/2025',
+      investmentTime: '11:00',
+      requestDate: '13/07/2025',
+      requestTime: '16:00'
+    };
+
+    const result = determineRefundEligibility(mockRequest);
+    expect(result).toEqual([undefined, true]);
   });
 }); 

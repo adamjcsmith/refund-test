@@ -1,16 +1,38 @@
 import { fromZonedTime } from "date-fns-tz"
 import { ErrorFirstTuple, ReversalRequest } from "@/types"
-import { addDays, getDay, getHours, isBefore, setHours } from "date-fns";
+import { addDays, addHours, getDay, getHours, isBefore, isWithinInterval, parse, setHours } from "date-fns";
 
 const NEW_TOS_EPOCH_DATE = new Date('2020-01-03');
 
 // Using a LUT here to map the customerTZ to the correct timezone
 // Better approach is to use IANA timezone names, as below:
 const TZ_LOOKUP = {
-  'US (PST)': 'America/Los_Angeles',
-  'US (EST)': 'America/New_York',
-  'Europe (CET)': 'Europe/Paris',
-  'Europe (GMT)': 'Europe/London',
+  'US (PST)': { IANA: 'America/Los_Angeles', format: 'MM/dd/yyyy' },
+  'US (EST)': { IANA: 'America/New_York', format: 'MM/dd/yyyy' },
+  'Europe (CET)': { IANA: 'Europe/Paris', format: 'dd/MM/yyyy' },
+  'Europe (GMT)': { IANA: 'Europe/London', format: 'dd/MM/yyyy' },
+}
+
+/**
+ * Helper function to parse dates reliably
+ */
+const parseDate = ({ dateString, timeString }: { dateString: string, timeString?: string }, format: string): Date => {
+  return timeString ? parse(`${dateString} ${timeString}`, `${format} HH:mm`, new Date()) : parse(dateString, format, new Date());
+
+  /*
+  if (format === 'dd/MM/yyyy') {
+    // For European format, manually parse to avoid ambiguity
+    const [day, month, year] = dateString.split('/').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  } else if (format === 'MM/dd/yyyy') {
+    // For American format, manually parse to avoid ambiguity
+    const [month, day, year] = dateString.split('/').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  } else {
+    // Fallback to date-fns parse
+    return parse(timeString ? `${dateString} ${timeString}` : dateString, format, new Date());
+  }
+  */
 }
 
 /**
@@ -19,14 +41,14 @@ const TZ_LOOKUP = {
  * @returns A tuple containing an error (if any) and a boolean indicating if the user is on the new TOS.
  */
 export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => {
-  const IANA_TZ = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
-  if (!IANA_TZ) {
+  const lookup = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
+  if (!lookup?.IANA) {
     return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
   }
 
   // Zone from the customer's tz to the system tz, ensuring consistency in date comparisons:
-  const signupDate = new Date(request.signupDate);
-  const signupDateZoned = fromZonedTime(signupDate, IANA_TZ);
+  const signupDate = parseDate({ dateString: request.signupDate }, lookup.format);
+  const signupDateZoned = fromZonedTime(signupDate, lookup.IANA);
 
   const isOldTOS = isBefore(signupDateZoned, NEW_TOS_EPOCH_DATE);
 
@@ -85,34 +107,74 @@ export const getNextBusinessDay9am = (date: Date): ErrorFirstTuple<Date> => {
  * @returns A tuple containing an error (if any) and the effective request time.
  */
 export const getEffectiveRequestTime = (request: ReversalRequest): ErrorFirstTuple<Date> => {
-  const IANA_TZ = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
-  if (!IANA_TZ) {
+  const { IANA, format } = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
+  if (!IANA) {
     return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
   }
 
-  const requestDate = new Date(`${request.requestDate} ${request.requestTime}`);
-  const requestDateZoned = fromZonedTime(requestDate, IANA_TZ);
+  const requestDate = parseDate({ dateString: request.requestDate, timeString: request.requestTime }, format);
+  const requestDateZoned = fromZonedTime(requestDate, IANA);
 
   if (request.source === 'web app') {
     return [undefined, requestDateZoned] // passing on the request date as-is
   } else if (request.source === 'phone') {
-    if (!isOutOfHours(requestDateZoned)) {
+    const [outOfHoursError, outOfHours] = isOutOfHours(requestDateZoned);
+
+    if (outOfHoursError) {
+      return [outOfHoursError, undefined]
+    }
+
+    if (!outOfHours) {
       return [undefined, requestDateZoned] // pass on as is as it's not out of hours
     }
 
-    return [new Error('Not implemented'), undefined] // TODO: implement
+    return getNextBusinessDay9am(requestDateZoned)
   }
 
   return [new Error(`Unknown source: ${request.source}`), undefined];
 }
-
 
 /**
  * Determines if the user is eligible for a refund based on their request.
  * @param request - The reversal request to check.
  * @returns A boolean indicating if the user is eligible for a refund.
  */
-export const determineRefundEligibility = (request: ReversalRequest): boolean => {
-  console.log('Checking eligibility for request:', request.name);
-  return false
+export const determineRefundEligibility = (request: ReversalRequest): ErrorFirstTuple<boolean> => {
+  const { IANA, format } = TZ_LOOKUP[request.customerTZ as keyof typeof TZ_LOOKUP];
+  if (!IANA) {
+    return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
+  }
+
+  const investmentDate = parseDate({ dateString: request.investmentDate, timeString: request.investmentTime }, format);
+  const investmentDateZoned = fromZonedTime(investmentDate, IANA);
+
+  const [requestError, requestDate] = getEffectiveRequestTime(request);
+  if (requestError) {
+    return [requestError, undefined]
+  }
+
+  const [newTOSError, usingNewTOS] = isNewTOS(request);
+  if (newTOSError) {
+    return [newTOSError, undefined]
+  }
+
+  let hoursToAdd: number;
+
+  if (request.source === 'web app') {
+    if (usingNewTOS) {
+      hoursToAdd = 16 // 16 hours after investment
+    } else {
+      hoursToAdd = 8 // 8 hours after investment
+    }
+  } else if (request.source === 'phone') {
+    if (usingNewTOS) {
+      hoursToAdd = 24 // 24 hours after investment
+    } else {
+      hoursToAdd = 4 // 4 hours after investment
+    }
+  } else {
+    return [new Error(`Unknown source: ${request.source}`), undefined]
+  }
+
+  return [undefined, isWithinInterval(requestDate, { start: investmentDateZoned, end: addHours(investmentDateZoned, hoursToAdd) })]
 }
