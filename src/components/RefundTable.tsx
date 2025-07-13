@@ -32,7 +32,7 @@ const RefundTable = () => {
       <TableHeader>
         <TableRow>
           <TableHead className="w-[200px]">Name</TableHead>
-          <TableHead>Customer Location (timezone)</TableHead>
+          <TableHead>Customer Location</TableHead>
           <TableHead>Sign up date</TableHead>
           <TableHead>Request Source</TableHead>
           <TableHead>Investment Date</TableHead>
@@ -53,7 +53,7 @@ const RefundTable = () => {
             <TableCell>{row.investmentTime}</TableCell>
             <TableCell>{row.requestDate}</TableCell>
             <TableCell>{row.requestTime}</TableCell>
-            <TableCell>{row.refundEligible ? 'Yes' : 'No'}</TableCell>
+            <TableCell className={row.refundEligible ? 'text-green-500' : 'text-red-500'}>{row.refundEligible ? 'Yes' : 'No'}</TableCell>
           </TableRow>
         ))}
       </TableBody>
