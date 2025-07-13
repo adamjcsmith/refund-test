@@ -14,28 +14,6 @@ const TZ_LOOKUP = {
 }
 
 /**
- * Helper function to parse dates reliably
- */
-const parseDate = ({ dateString, timeString }: { dateString: string, timeString?: string }, format: string): Date => {
-  return timeString ? parse(`${dateString} ${timeString}`, `${format} HH:mm`, new Date()) : parse(dateString, format, new Date());
-
-  /*
-  if (format === 'dd/MM/yyyy') {
-    // For European format, manually parse to avoid ambiguity
-    const [day, month, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day); // month is 0-indexed
-  } else if (format === 'MM/dd/yyyy') {
-    // For American format, manually parse to avoid ambiguity
-    const [month, day, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day); // month is 0-indexed
-  } else {
-    // Fallback to date-fns parse
-    return parse(timeString ? `${dateString} ${timeString}` : dateString, format, new Date());
-  }
-  */
-}
-
-/**
  * Determines if the user is on the new TOS based on their signup date.
  * @param request - The reversal request to check.
  * @returns A tuple containing an error (if any) and a boolean indicating if the user is on the new TOS.
@@ -47,7 +25,7 @@ export const isNewTOS = (request: ReversalRequest): ErrorFirstTuple<boolean> => 
   }
 
   // Zone from the customer's tz to the system tz, ensuring consistency in date comparisons:
-  const signupDate = parseDate({ dateString: request.signupDate }, lookup.format);
+  const signupDate = parse(request.signupDate, lookup.format, new Date());
   const signupDateZoned = fromZonedTime(signupDate, lookup.IANA);
 
   const isOldTOS = isBefore(signupDateZoned, NEW_TOS_EPOCH_DATE);
@@ -112,7 +90,7 @@ export const getEffectiveRequestTime = (request: ReversalRequest): ErrorFirstTup
     return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
   }
 
-  const requestDate = parseDate({ dateString: request.requestDate, timeString: request.requestTime }, format);
+  const requestDate = parse(`${request.requestDate} ${request.requestTime}`, `${format} HH:mm`, new Date());
   const requestDateZoned = fromZonedTime(requestDate, IANA);
 
   if (request.source === 'web app') {
@@ -145,7 +123,7 @@ export const determineRefundEligibility = (request: ReversalRequest): ErrorFirst
     return [new Error(`Unknown timezone: ${request.customerTZ}`), undefined];
   }
 
-  const investmentDate = parseDate({ dateString: request.investmentDate, timeString: request.investmentTime }, format);
+  const investmentDate = parse(`${request.investmentDate} ${request.investmentTime}`, `${format} HH:mm`, new Date());
   const investmentDateZoned = fromZonedTime(investmentDate, IANA);
 
   const [requestError, requestDate] = getEffectiveRequestTime(request);
