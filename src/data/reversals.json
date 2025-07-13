@@ -1,0 +1,112 @@
+[
+  {
+    "Name": "Emma Smith",
+    "Customer Location (timezone)": "US (PST)",
+    "Sign up date": "1/2/2020",
+    "Request Source": "phone",
+    "Investment Date": "1/2/2021",
+    "Investment Time": "06:00",
+    "Refund Request Date": "1/2/2021",
+    "Refund Request Time": "09:00"
+  },
+  {
+    "Name": "Benjamin Johnson",
+    "Customer Location (timezone)": "Europe (CET)",
+    "Sign up date": "12/2/2020",
+    "Request Source": "web app",
+    "Investment Date": "2/1/2021",
+    "Investment Time": "06:30",
+    "Refund Request Date": "1/2/2021",
+    "Refund Request Time": "23:00"
+  },
+  {
+    "Name": "Olivia Davis",
+    "Customer Location (timezone)": "Europe (CET)",
+    "Sign up date": "1/2/2020",
+    "Request Source": "web app",
+    "Investment Date": "2/2/2021",
+    "Investment Time": "13:00",
+    "Refund Request Date": "2/2/2021",
+    "Refund Request Time": "20:00"
+  },
+  {
+    "Name": "Ethan Anderson",
+    "Customer Location (timezone)": "US (PST)",
+    "Sign up date": "1/11/2011",
+    "Request Source": "web app",
+    "Investment Date": "2/1/2021",
+    "Investment Time": "13:00",
+    "Refund Request Date": "2/2/2021",
+    "Refund Request Time": "16:00"
+  },
+  {
+    "Name": "Sophia Wilson",
+    "Customer Location (timezone)": "US (PST)",
+    "Sign up date": "2/1/2020",
+    "Request Source": "phone",
+    "Investment Date": "2/1/2021",
+    "Investment Time": "22:00",
+    "Refund Request Date": "2/2/2021",
+    "Refund Request Time": "05:00"
+  },
+  {
+    "Name": "Liam Martinez",
+    "Customer Location (timezone)": "Europe (GMT)",
+    "Sign up date": "1/1/2020",
+    "Request Source": "web app",
+    "Investment Date": "1/1/2021",
+    "Investment Time": "11:00",
+    "Refund Request Date": "11/1/2021",
+    "Refund Request Time": "12:00"
+  },
+  {
+    "Name": "Jonathan Giles",
+    "Customer Location (timezone)": "Europe (CET)",
+    "Sign up date": "1/1/2020",
+    "Request Source": "phone",
+    "Investment Date": "1/1/2021",
+    "Investment Time": "11:00",
+    "Refund Request Date": "12/1/2021",
+    "Refund Request Time": "12:00"
+  },
+  {
+    "Name": "Priya Sharp",
+    "Customer Location (timezone)": "Europe (CET)",
+    "Sign up date": "10/10/2020",
+    "Request Source": "phone",
+    "Investment Date": "5/5/2021",
+    "Investment Time": "00:30",
+    "Refund Request Date": "5/5/2021",
+    "Refund Request Time": "21:00"
+  },
+  {
+    "Name": "Raja Ortiz",
+    "Customer Location (timezone)": "US (EST)",
+    "Sign up date": "10/10/2021",
+    "Request Source": "phone",
+    "Investment Date": "01/15/2022",
+    "Investment Time": "21:30",
+    "Refund Request Date": "01/16/2022",
+    "Refund Request Time": "07:00"
+  },
+  {
+    "Name": "Livia Burns",
+    "Customer Location (timezone)": "US (PST)",
+    "Sign up date": "10/10/2021",
+    "Request Source": "phone",
+    "Investment Date": "01/15/2022",
+    "Investment Time": "21:30",
+    "Refund Request Date": "01/16/2022",
+    "Refund Request Time": "19:00"
+  },
+  {
+    "Name": "Lacey Gates",
+    "Customer Location (timezone)": "Europe (CET)",
+    "Sign up date": "10/10/2021",
+    "Request Source": "web app",
+    "Investment Date": "15/01/2022",
+    "Investment Time": "23:36",
+    "Refund Request Date": "16/01/2022",
+    "Refund Request Time": "13:12"
+  }
+]
